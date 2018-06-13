@@ -88,7 +88,7 @@ def residual_unit(data, num_filter, stride, dim_match, name, bottle_neck=True, n
         # return mx.sym.Activation(data=eltwise, act_type='relu', name=name + '_relu')
 
 
-def resnext(units, num_stage, filter_list, num_class, num_group, image_shape, bottle_neck=True, bn_mom=0.9, workspace=256, memonger=False):
+def resnext(units, num_stage, filter_list, num_class, num_group, bottle_neck=True, bn_mom=0.9, workspace=256, memonger=False):
     """Return ResNeXt symbol of
     Parameters
     ----------

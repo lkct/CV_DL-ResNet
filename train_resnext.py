@@ -34,7 +34,7 @@ def main():
             "no experiments done on detph {}, you can do it youself".format(args.depth))
     units = per_unit*3
     symbol = resnext(units=units, num_stage=3, filter_list=filter_list, num_class=args.num_classes, num_group=args.num_groups,
-                    bottle_neck=bottle_neck, bn_mom=args.bn_mom, workspace=args.workspace, memonger=args.memonger)
+                     bottle_neck=bottle_neck, bn_mom=args.bn_mom, workspace=args.workspace, memonger=args.memonger)
     kv = mx.kvstore.create(args.kv_store)
     devs = mx.cpu() if args.gpus is None else [
         mx.gpu(int(i)) for i in args.gpus.split(',')]
