@@ -29,8 +29,8 @@ def main():
         raise ValueError(
             "no experiments done on detph {}, you can do it youself".format(args.depth))
     units = per_unit * 3
-    symbol = densenet(units=units, num_stage=3, growth_rate=args.growth_rate, num_class=args.num_classes, reduction=args.reduction,
-                      drop_out=args.drop_out, bottle_neck=bottle_neck, bn_mom=args.bn_mom, workspace=args.workspace, memonger=args.memonger)
+    symbol = densenet(units=units, num_stage=3, growth_rate=args.growth_rate, num_class=args.num_classes,
+                      reduction=args.reduction, drop_out=args.drop_out, bottle_neck=bottle_neck, bn_mom=args.bn_mom, workspace=args.workspace)
     kv = mx.kvstore.create(args.kv_store)
     devs = mx.cpu() if args.gpus is None else [
         mx.gpu(int(i)) for i in args.gpus.split(',')]
@@ -139,8 +139,8 @@ if __name__ == "__main__":
                         help='training ends at this num of epoch')
     parser.add_argument('--frequent', type=int, default=50,
                         help='frequency of logging')
-    parser.add_argument('--memonger', action='store_true', default=False,
-                        help='true means using memonger to save momory, https://github.com/dmlc/mxnet-memonger')
+    # parser.add_argument('--memonger', action='store_true', default=False,
+    #                     help='true means using memonger to save momory, https://github.com/dmlc/mxnet-memonger')
     parser.add_argument('--retrain', action='store_true', default=False,
                         help='true means continue training')
     args = parser.parse_args()
