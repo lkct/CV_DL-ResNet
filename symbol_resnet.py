@@ -118,7 +118,7 @@ def resnet(units, num_stage, filter_list, num_class, bottle_neck=True, bn_mom=0.
     relu1 = mx.sym.Activation(data=bn1, act_type='relu', name='relu1')
     # Although kernel is not used here when global_pool=True, we should put one
     pool1 = mx.sym.Pooling(data=relu1, global_pool=True, kernel=(7, 7),
-                              pool_type='avg', name='pool1')
+                           pool_type='avg', name='pool1')
     flat = mx.sym.Flatten(data=pool1)
     fc1 = mx.sym.FullyConnected(data=flat, num_hidden=num_class, name='fc1')
     return mx.sym.SoftmaxOutput(data=fc1, label=lab, name='softmax')

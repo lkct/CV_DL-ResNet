@@ -108,7 +108,6 @@ def resnext(units, num_stage, filter_list, num_class, num_group, bottle_neck=Tru
     num_unit = len(units)
     assert(num_unit == num_stage)
     data = mx.sym.Variable(name='data')
-    data = mx.sym.identity(data=data, name='id')
     data = mx.sym.BatchNorm(data=data, fix_gamma=True,
                             eps=2e-5, momentum=bn_mom, name='bn_data')
     body = mx.sym.Convolution(data=data, num_filter=filter_list[0],

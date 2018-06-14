@@ -11,8 +11,8 @@ res = [re.compile('.*Epoch\[(\d+)\] .*Train-accuracy.*=([.\d]+)'),
 
 def plot_acc(log_name, color="r"):
 
-    train_name = log_name.replace(".log", " train")
-    val_name = log_name.replace(".log", " val")
+    train_name = log_name.replace(".log", " train").split('/')[-1]
+    val_name = log_name.replace(".log", " val").split('/')[-1]
 
     data = {}
     with open(log_name) as f:
