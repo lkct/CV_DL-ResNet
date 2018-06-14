@@ -50,7 +50,7 @@ def residual_unit(data, num_filter, stride, dim_match, name, bottle_neck=True, b
         if dim_match:
             shortcut = data
         else:
-            shortcut = mx.sym.Convolution(data=act1, num_filter=num_filter,
+            shortcut = mx.sym.Convolution(data=data, num_filter=num_filter,
                                           kernel=(1, 1), stride=stride, no_bias=True,
                                           workspace=workspace, name=name+'_sc')
         if memonger:
