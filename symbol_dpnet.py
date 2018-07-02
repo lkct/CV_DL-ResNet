@@ -1,29 +1,8 @@
 import mxnet as mx
 
 
-def bn_ac_conv(data, num_filter, name, kernel, stride=(1, 1), pad=(0, 0), bn_mom=0.9, workspace=512):
-    bn = mx.sym.BatchNorm(data=data, fix_gamma=False,
-                          eps=2e-5, momentum=bn_mom, name=name+'_bn')
-    ac = mx.sym.Activation(
-        data=bn, act_type='relu', name=name+'_relu')
-    conv = mx.sym.Convolution(data=ac, num_filter=num_filter,
-                              kernel=kernel, stride=stride, pad=pad,
-                              no_bias=True, workspace=workspace, name=name+'_conv')
-    return conv
-
-
-def dual_path_block(data, num_filter, name, inc=12, type_='norm', workspace=512):
-    if type_ is 'proj':
-        stride = (1, 1)
-        has_proj = True
-    elif type_ is 'down':
-        stride = (2, 2)
-        has_proj = True
-    elif type_ is 'norm':
-        stride = (1, 1)
-        has_proj = False
-
-    if has_proj:
+def dual_path_block(data, num_filter, stride, dim_match, name, inc=12, workspace=512):
+    if dim_match:
         if type(data) is list:
             data = mx.sym.Concat(data[0], data[1], name=name+'_input')
         shortcut = mx.sym.Convolution(data=data, num_filter=(num_filter+2*inc),
@@ -38,15 +17,27 @@ def dual_path_block(data, num_filter, name, inc=12, type_='norm', workspace=512)
         sc_conc = data[1]
         data = mx.sym.Concat(data[0], data[1], name=name+'_input')
 
-    conv1 = bn_ac_conv(data=data, num_filter=int(num_filter*0.25),
-                       kernel=(1, 1), stride=(1, 1), pad=(0, 0),
-                       workspace=workspace, name=name+'_conv1')
-    conv2 = bn_ac_conv(data=conv1, num_filter=int(num_filter*0.25),
-                       kernel=(3, 3), stride=stride, pad=(1, 1),
-                       workspace=workspace, name=name+'_conv2')
-    conv3 = bn_ac_conv(data=conv2, num_filter=(num_filter+inc),
-                       kernel=(1, 1), stride=(1, 1), pad=(0, 0),
-                       workspace=workspace, name=name+'_conv3')
+    bn1 = mx.sym.BatchNorm(data=data, fix_gamma=False,
+                           eps=2e-5, momentum=bn_mom, name=name + '_bn1')
+    act1 = mx.sym.Activation(
+        data=bn1, act_type='relu', name=name + '_relu1')
+    conv1 = mx.sym.Convolution(data=act1, num_filter=int(num_filter*0.25),
+                               kernel=(1, 1), stride=(1, 1), pad=(0, 0),
+                               no_bias=True, workspace=workspace, name=name + '_conv1')
+    bn2 = mx.sym.BatchNorm(data=conv1, fix_gamma=False,
+                           eps=2e-5, momentum=bn_mom, name=name + '_bn2')
+    act2 = mx.sym.Activation(
+        data=bn2, act_type='relu', name=name + '_relu2')
+    conv2 = mx.sym.Convolution(data=act2, num_filter=int(num_filter*0.25),
+                               kernel=(3, 3), stride=stride, pad=(1, 1),
+                               no_bias=True, workspace=workspace, name=name + '_conv2')
+    bn3 = mx.sym.BatchNorm(data=conv2, fix_gamma=False,
+                           eps=2e-5, momentum=bn_mom, name=name + '_bn3')
+    act3 = mx.sym.Activation(
+        data=bn3, act_type='relu', name=name + '_relu3')
+    conv3 = mx.sym.Convolution(data=act3, num_filter=(num_filter+inc),
+                               kernel=(1, 1), stride=(1, 1), pad=(0, 0),
+                               no_bias=True, workspace=workspace, name=name + '_conv3')
 
     conv_plus = mx.sym.slice_axis(data=conv3, axis=1, begin=0, end=num_filter,
                                   name=name+'_conv_plus')
@@ -69,11 +60,11 @@ def dpnet(units, num_stage, filter_list, num_class, bn_mom=0.9, workspace=512):
                               kernel=(3, 3), stride=(1, 1), pad=(1, 1),
                               no_bias=True, name="conv0", workspace=workspace)
     for i in range(num_stage):
-        body = dual_path_block(body, filter_list[i+1], name='stage%d_unit%d' % (i + 1, 1), workspace=workspace,
-                               type_ ='proj' if i == 0 else 'down')
+        body = dual_path_block(body, filter_list[i+1],  (1 if i == 0 else 2, 1 if i == 0 else 2),
+                               name='stage%d_unit%d' % (i + 1, 1), workspace=workspace)
         for j in range(units[i]-1):
-            body = dual_path_block(body, filter_list[i+1], name='stage%d_unit%d' % (i + 1, j + 2), workspace=workspace,
-                                   type_='norm')
+            body = dual_path_block(body, filter_list[i+1], (1, 1),
+                                   name='stage%d_unit%d' % (i + 1, j + 2), workspace=workspace)
     body = mx.sym.Concat(body[0], body[1], name='final_concat')
     bn1 = mx.sym.BatchNorm(data=body, fix_gamma=False,
                            eps=2e-5, momentum=bn_mom, name='bn1')
