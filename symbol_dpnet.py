@@ -1,8 +1,12 @@
 import mxnet as mx
 
 
-def dual_path_block(data, num_filter, stride, dim_match, name, inc=12, workspace=512):
+def dual_path_block(data, num_filter, stride, dim_match, name, inc=12, bn_mom=0.9, workspace=512):
     if dim_match:
+        sc_plus = data[0]
+        sc_conc = data[1]
+        data = mx.sym.Concat(data[0], data[1], name=name+'_input')
+    else:
         if type(data) is list:
             data = mx.sym.Concat(data[0], data[1], name=name+'_input')
         shortcut = mx.sym.Convolution(data=data, num_filter=(num_filter+2*inc),
@@ -12,10 +16,6 @@ def dual_path_block(data, num_filter, stride, dim_match, name, inc=12, workspace
             data=shortcut, axis=1, begin=0, end=num_filter, name=name+'_sc_plus')
         sc_conc = mx.sym.slice_axis(data=shortcut, axis=1, begin=num_filter, end=(
             num_filter+2*inc), name=name+'_sc_concat')
-    else:
-        sc_plus = data[0]
-        sc_conc = data[1]
-        data = mx.sym.Concat(data[0], data[1], name=name+'_input')
 
     bn1 = mx.sym.BatchNorm(data=data, fix_gamma=False,
                            eps=2e-5, momentum=bn_mom, name=name + '_bn1')
@@ -60,10 +60,10 @@ def dpnet(units, num_stage, filter_list, num_class, bn_mom=0.9, workspace=512):
                               kernel=(3, 3), stride=(1, 1), pad=(1, 1),
                               no_bias=True, name="conv0", workspace=workspace)
     for i in range(num_stage):
-        body = dual_path_block(body, filter_list[i+1],  (1 if i == 0 else 2, 1 if i == 0 else 2),
+        body = dual_path_block(body, filter_list[i+1],  (1 if i == 0 else 2, 1 if i == 0 else 2), False,
                                name='stage%d_unit%d' % (i + 1, 1), workspace=workspace)
         for j in range(units[i]-1):
-            body = dual_path_block(body, filter_list[i+1], (1, 1),
+            body = dual_path_block(body, filter_list[i+1], (1, 1), True,
                                    name='stage%d_unit%d' % (i + 1, j + 2), workspace=workspace)
     body = mx.sym.Concat(body[0], body[1], name='final_concat')
     bn1 = mx.sym.BatchNorm(data=body, fix_gamma=False,
