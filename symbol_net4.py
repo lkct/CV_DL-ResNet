@@ -114,7 +114,6 @@ def net4(units, num_stage, filter_list, num_class, bottle_neck=True, bn_mom=0.9,
     """
     num_unit = len(units)
     assert(num_unit == num_stage)
-    lab = mx.sym.Variable(name='softmax_label')
     data = mx.sym.Variable(name='data')
     data = mx.sym.BatchNorm(data=data, fix_gamma=True,
                             eps=2e-5, momentum=bn_mom, name='bn_data')
@@ -144,6 +143,4 @@ def net4(units, num_stage, filter_list, num_class, bottle_neck=True, bn_mom=0.9,
                            pool_type='avg', name='pool1')
     flat = mx.sym.Flatten(data=pool1)
     fc1 = mx.sym.FullyConnected(data=flat, num_hidden=num_class, name='fc1')
-    return mx.sym.SoftmaxOutput(data=fc1, label=lab, name='softmax')
-    # soft = mx.sym.softmax(data=fc1, axis=1)
-    # return mx.sym.Custom(data=soft, label=lab, name='loss', op_type='loss')
+    return mx.sym.SoftmaxOutput(data=fc1, name='softmax')
