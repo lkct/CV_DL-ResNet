@@ -58,7 +58,7 @@ def residual_unit(data, data_prev, num_filter, stride, dim_match, name, bottle_n
         raise ValueError("must have bottleneck structure")
 
 
-def resnet(units, num_stage, filter_list, num_class, bottle_neck=True, bn_mom=0.9, workspace=512):
+def net1(units, num_stage, filter_list, num_class, bottle_neck=True, bn_mom=0.9, workspace=512):
     """Return ResNet symbol of cifar10 and imagenet
     Parameters
     ----------

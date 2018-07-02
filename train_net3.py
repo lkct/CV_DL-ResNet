@@ -5,7 +5,7 @@ import time
 
 import mxnet as mx
 
-from symbol_net3 import resnet
+from symbol_net3 import net3
 
 fname = time.strftime("%Y%m%d%H%M%S", time.localtime())
 logging.basicConfig(level=logging.INFO,
@@ -33,7 +33,7 @@ def main():
         raise ValueError(
             "no experiments done on detph {}, you can do it youself".format(args.depth))
     units = per_unit*3
-    symbol = resnet(units=units, num_stage=3, filter_list=filter_list, num_class=args.num_classes,
+    symbol = net3(units=units, num_stage=3, filter_list=filter_list, num_class=args.num_classes,
                     bottle_neck=bottle_neck, bn_mom=args.bn_mom, workspace=args.workspace)
     kv = mx.kvstore.create(args.kv_store)
     devs = mx.cpu() if args.gpus is None else [
@@ -43,7 +43,7 @@ def main():
     begin_epoch = args.model_load_epoch if args.model_load_epoch else 0
     if not os.path.exists("./model"):
         os.mkdir("./model")
-    model_prefix = "model/resnet-{}-{}-{}".format(
+    model_prefix = "model/net3-{}-{}-{}".format(
         data_type, args.depth, kv.rank)
     checkpoint = mx.callback.do_checkpoint(model_prefix)
     arg_params = None
@@ -101,7 +101,7 @@ def main():
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
-        description="command for training resnet-v2")
+        description="command for training net3")
     parser.add_argument('--gpus', type=str, default=None,
                         help='the gpus will be used, e.g "0,1,2,3"')
     parser.add_argument('--data-dir', type=str, default='./data/cifar10/',
@@ -120,7 +120,7 @@ if __name__ == "__main__":
                         help='memory space size(MB) used in convolution, if xpu '
                         ' memory is oom, then you can try smaller vale, such as --workspace 256')
     parser.add_argument('--depth', type=int, default=164,
-                        help='the depth of resnet')
+                        help='the depth of net3')
     parser.add_argument('--num-classes', type=int, default=10,
                         help='the class number of your task')
     parser.add_argument('--num-examples', type=int, default=50000,
